@@ -30,10 +30,40 @@ CREATE TABLE IF NOT EXISTS "Account"
 (
     "AcctID"        INT         PRIMARY KEY AUTOINCREMENT,
     "AcctType"      TINYINT     NOT NULL, --FK
-    "AcctNum"       INT         NOT NULL,
+    "AcctNum"       INT         NOT NULL UNIQUE,
     "AcctName"      VARCHAR(26) NOT NULL,
     "Description"   VARCHAR(64) NULL,
-    FOREIGN KEY ("AcctType") REFERENCES "AcctType"
+    FOREIGN KEY ("AcctType") REFERENCES "AcctType"("TypeID")
 );
 
-CREATE TABLE IF NOT EXISTS
+CREATE TABLE IF NOT EXISTS "SubAccount"
+(
+    "AcctID"    INT     NOT NULL,
+    "SubID"     TINYINT NOT NULL,
+    "AcctName"  VARCHAR(26) NOT NULL,
+    PRIMARY KEY ("AcctID","SubID")
+);
+
+CREATE TABLE IF NOT EXISTS "GeneralLedger"
+(
+    "LedgerID"      BIGINT      PRIMARY KEY AUTOINCREMENT,
+    "TransDate"     DATE        NOT NULL,
+    "DayOrder"      INT         NOT NULL,
+    "Committed"     BOOLEAN     NOT NULL,
+    "Comment"       VARCHAR(128) NULL,
+    "AuditTS"       DATETIME    NOT NULL,
+    UNIQUE ("TransDate","DayOrder") ON CONFLICT FAIL
+);
+
+CREATE TABLE IF NOT EXISTS "TransactionLine"
+(
+    "LineID"    BIGINT          PRIMARY KEY AUTOINCREMENT,
+    "LedgerID"  BIGINT          NOT NULL,
+    "AcctID"    INT             NOT NULL,
+    "SubID"     TINYINT         NULL,
+    "Amt"       DECIMAL(11,2)   NOT NULL,
+    FOREIGN KEY ("LedgerID") REFERENCES "GeneralLedger"("LedgerID"),
+    FOREIGN KEY ("AcctID") REFERENCES "Account"("AcctID"),
+    UNIQUE ("LedgerID","AcctID","SubID"),
+    FOREIGN KEY ("AcctID","SubID") REFERENCES "SubAccount"("AcctID","SubID")
+);
